@@ -2319,8 +2319,8 @@ let define_by_eqs opts i (l,ann) t nt eqs =
   in
   let env = Global.env () in (* To find the comp constant *)
   let ty = it_mkProd_or_LetIn arity sign in
-  let data = Constrintern.compute_full_internalization_env
-    env Constrintern.Recursive [] [i] [ty] [impls] 
+  let data = Constrintern.compute_internalization_env
+    env Constrintern.Recursive [i] [ty] [impls] 
   in
   let sort = Retyping.get_type_of env !isevar ty in
   let fixprot = mkApp (delayed_force Subtac_utils.fix_proto, [|sort; ty|]) in
@@ -2407,7 +2407,7 @@ let define_by_eqs opts i (l,ann) t nt eqs =
 	      map (interp_eqn unfoldi None isevar env data sign arity None)
 		(unfold_eqs eqs)
 	    in
-	    let data = ([], []) in
+	    let data = [] in
 	    let unfold_split = covering env isevar (unfoldi, with_comp, data) unfold_equations prob arity in
 	    let hook_unfold cmap helpers' _ gr' = 
 	      let info = { base_id = baseid; helpers_info = helpers @ helpers' } in
@@ -2467,7 +2467,7 @@ GEXTEND Gram
   ;
 
   binders_let2:
-    [ [ l = binders_let_fixannot -> l ] ]
+    [ [ l = binders_fixannot -> l ] ]
   ;
 
   equation:
