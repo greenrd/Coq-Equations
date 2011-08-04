@@ -290,7 +290,7 @@ TACTIC EXTEND curry
   match curry_hyp (mkVar id) (pf_get_hyp_typ gl id) with
   | Some (prf, typ) -> 
       cut_replacing id typ (Tacmach.refine_no_check prf) gl
-  | None -> tclFAIL 0 (str"No currying to do in" ++ pr_id id) gl ]
+  | None -> tclFAIL 0 (str"No currying to do in " ++ pr_id id) gl ]
 END
 
 (* TACTIC EXTEND pattern_tele *)
