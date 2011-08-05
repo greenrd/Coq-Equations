@@ -47,6 +47,14 @@ open Coqlib
 
 let ($) f g = fun x -> f (g x)
 
+let second f (x, y) = (x, f y)
+
+let fmapOP f = Option.map (second f)
+
+let hylo f g =
+  let rec h x = (f $ fmapOP h $ g) x
+  in h
+
 let proper_tails l = snd (List.fold_right (fun _ (t,ts) -> List.tl t, ts @ [t]) l (l, []))
 
 let list_map_filter_i f l = 

@@ -109,7 +109,7 @@ Ltac rec_wf_fix x recname fixterm :=
   intros until 1 ; simp_exists ; 
     on_last_hyp ltac:(fun x => rename x into recname) ;
   simplify_dep_elim ; intros ; unblock_goal ; intros ;
-  move recname at bottom ; repeat curry recname ; simpl in recname.
+  move recname at bottom ; repeat rec_curry recname ; simpl in recname.
 
 (** Generalize an object [x], packing it in a sigma type if necessary. *)
 

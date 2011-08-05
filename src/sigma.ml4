@@ -271,23 +271,36 @@ TACTIC EXTEND pattern_sigma
     pattern_sigma term id gl ]
 END
 
-let curry_hyp c t =
+let rec_curry_hyp c t =
+  let split = 
+    Option.map (fun (ty, pred) -> let (n, _, dom) = destLambda pred in ((ty, pred, n, dom), dom)) $ decompose_coq_sigma
+  in
   let na, dom, concl = destProd t in
-    match decompose_coq_sigma dom with
-    | None -> None
-    | Some (ty, pred) ->
-	let (n, idx, dom) = destLambda pred in
-	let newctx = [(na, None, dom); (n, None, idx)] in
-	let tuple = mkApp ((Lazy.force coq_sigma).intro,
-			  [| lift 2 ty; lift 2 pred; mkRel 2; mkRel 1 |])
+  let build =
+    Option.cata
+      (fun ((ty, pred, n, dom), (revctx, tuple)) ->
+	let revctx = (n, None, ty) :: (match revctx with
+	  | [] -> [(na, None, dom)]
+	  | _  -> revctx)
 	in
-	let term = it_mkLambda_or_LetIn (mkApp (c, [| tuple |])) newctx in
-	let typ = it_mkProd_or_LetIn (subst1 tuple concl) newctx in
-	  Some (term, typ)
+	let l1 = List.length revctx in
+	let tuple = mkApp ((Lazy.force coq_sigma).intro,
+			   [| lift l1 ty; lift l1 pred; mkRel l1; tuple |])
+	in (revctx, tuple))
+      ([], mkRel 1)
+  in
+  let (revctx, tuple) = hylo build split dom in
+  match revctx with
+    | [] -> None
+    | _  ->
+      let newctx = List.rev revctx in
+      let term = it_mkLambda_or_LetIn (mkApp (c, [| tuple |])) newctx in
+      let typ = it_mkProd_or_LetIn (subst1 tuple concl) newctx in
+      Some (term, typ)
 	    
-TACTIC EXTEND curry
-[ "curry" hyp(id) ] -> [ fun gl ->
-  match curry_hyp (mkVar id) (pf_get_hyp_typ gl id) with
+TACTIC EXTEND rec_curry
+[ "rec_curry" hyp(id) ] -> [ fun gl ->
+  match rec_curry_hyp (mkVar id) (pf_get_hyp_typ gl id) with
   | Some (prf, typ) -> 
       cut_replacing id typ (Tacmach.refine_no_check prf) gl
   | None -> tclFAIL 0 (str"No currying to do in " ++ pr_id id) gl ]
